@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>4-7-8 Breathing</title>
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one centered column. A large orb that grows, holds and shrinks, a phase ring around it, controls below, the 4-7-8 key at the bottom. */
+:root {
+  --bg: #eaf1f0;
+  --surface: #f6faf9;
+  --fg: #12302e;
+  --muted: #55706d;
+  --line: #cddcda;
+  --accent: #1f766e;
+  --on-accent: #ffffff;
+  --inhale: #2f9388;
+  --hold: #5a63b8;
+  --exhale: #3f87bd;
+  --font-display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1719; --surface: #112326; --fg: #e3eeec; --muted: #8ea8a5; --line: #234044;
+    --accent: #5fc4b8; --on-accent: #0b1719;
+    --inhale: #5fc4b8; --hold: #8d95e0; --exhale: #6fb2e6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1719; --surface: #112326; --fg: #e3eeec; --muted: #8ea8a5; --line: #234044;
+  --accent: #5fc4b8; --on-accent: #0b1719;
+  --inhale: #5fc4b8; --hold: #8d95e0; --exhale: #6fb2e6;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 32px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+header { text-align: center; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.75rem; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.stage { position: relative; width: min(100%, 340px); aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--line); stroke-width: 3; }
+.ring-prog { fill: none; stroke: var(--phase, var(--accent)); stroke-width: 3; stroke-linecap: round; }
+.guide { position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed var(--line); }
+.orb {
+  position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--phase) 55%, var(--surface)), var(--phase));
+  box-shadow: 0 0 60px color-mix(in srgb, var(--phase) 35%, transparent);
+  opacity: 0.92;
+  transform: scale(0.55);
+  will-change: transform;
+}
+.readout { position: relative; text-align: center; color: var(--fg); pointer-events: none; }
+.phase { font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; letter-spacing: 0.02em; }
+.count { font-family: var(--font-display); font-weight: 500; font-size: 3.2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.orb-on .phase, .orb-on .count { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.25); }
+
+.controls { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+button, .seg label { font: inherit; }
+.primary {
+  background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px;
+  padding: 14px 40px; font-weight: 600; font-size: 1.05rem; cursor: pointer; min-width: 150px;
+}
+.ghost {
+  background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 999px;
+  padding: 14px 24px; font-weight: 500; cursor: pointer;
+}
+.primary:hover, .ghost:hover { filter: brightness(1.08); }
+button:focus-visible, .seg input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.seg label { cursor: pointer; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span { display: block; padding: 7px 16px; border-radius: 999px; font-size: 0.9rem; color: var(--muted); }
+.seg input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.seg input:disabled + span { opacity: 0.5; cursor: not-allowed; }
+.status { color: var(--muted); font-size: 0.95rem; min-height: 1.5em; text-align: center; font-variant-numeric: tabular-nums; }
+
+.key { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.key div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; }
+.key b { display: block; font-family: var(--font-display); font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.key span { font-size: 0.82rem; color: var(--muted); }
+.key .i b { color: var(--inhale); } .key .h b { color: var(--hold); } .key .e b { color: var(--exhale); }
+.tip { margin: 0; font-size: 0.88rem; color: var(--muted); text-align: center; max-width: 52ch; }
+@media (max-width: 380px) { .count { font-size: 2.6rem; } .phase { font-size: 1.35rem; } }
+</style>
+</head>
+<body>
+
+
+<main>
+  <header>
+    <h1>4-7-8 Breathing</h1>
+    <p class="sub">Inhale 4 seconds, hold 7, exhale 8. One cycle takes 19 seconds.</p>
+  </header>
+
+  <div class="stage" id="stage" style="--phase: var(--inhale)">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="ring-track" cx="50" cy="50" r="47"></circle>
+      <circle class="ring-prog" id="ring" cx="50" cy="50" r="47"></circle>
+    </svg>
+    <div class="guide"></div>
+    <div class="orb" id="orb"></div>
+    <div class="readout">
+      <div class="phase" id="phase" aria-live="polite">Ready</div>
+      <div class="count" id="count">4-7-8</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <button class="primary" id="toggle" type="button">Start</button>
+      <button class="ghost" id="reset" type="button">Reset</button>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Number of cycles">
+      <label><input type="radio" name="rounds" id="r4" value="4" checked><span>4 cycles</span></label>
+      <label><input type="radio" name="rounds" id="r8" value="8"><span>8 cycles</span></label>
+      <label><input type="radio" name="rounds" id="r0" value="0"><span>Keep going</span></label>
+    </div>
+    <div class="status" id="status">Sit comfortably. Breathe in through your nose, out through your mouth.</div>
+  </div>
+
+  <div class="key" aria-label="Pattern">
+    <div class="i"><b>4s</b><span>Inhale through the nose</span></div>
+    <div class="h"><b>7s</b><span>Hold the breath</span></div>
+    <div class="e"><b>8s</b><span>Exhale through the mouth</span></div>
+  </div>
+  <p class="tip">If you feel lightheaded, stop and breathe normally. Four cycles is the usual starting point.</p>
+</main>
+
+<script>
+(function () {
+  var PHASES = [
+    { name: "Inhale", dur: 4, color: "var(--inhale)", from: 0, to: 1 },
+    { name: "Hold",   dur: 7, color: "var(--hold)",   from: 1, to: 1 },
+    { name: "Exhale", dur: 8, color: "var(--exhale)", from: 1, to: 0 }
+  ];
+  var CYCLE = 19;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var MIN = reduce ? 0.8 : 0.55, MAX = 1;
+
+  var stage = document.getElementById("stage");
+  var orb = document.getElementById("orb");
+  var ring = document.getElementById("ring");
+  var phaseEl = document.getElementById("phase");
+  var countEl = document.getElementById("count");
+  var statusEl = document.getElementById("status");
+  var toggleBtn = document.getElementById("toggle");
+  var resetBtn = document.getElementById("reset");
+  var radios = document.querySelectorAll('input[name="rounds"]');
+
+  var C = 2 * Math.PI * 47;
+  ring.style.strokeDasharray = C;
+  ring.style.strokeDashoffset = C;
+
+  var running = false, started = false, elapsed = 0, startAt = 0, raf = 0, wake = null;
+  var lastPhase = "", lastCount = "", lastStatus = "";
+
+  function rounds() {
+    for (var i = 0; i < radios.length; i++) if (radios[i].checked) return parseInt(radios[i].value, 10);
+    return 4;
+  }
+  function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+  function setScale(s) { orb.style.transform = "scale(" + (MIN + (MAX - MIN) * s).toFixed(4) + ")"; }
+  function setText(el, key, val, last) { if (val !== last) { el.textContent = val; } return val; }
+  function lockRounds(lock) { for (var i = 0; i < radios.length; i++) radios[i].disabled = lock; }
+
+  function render(t) {
+    var total = rounds();
+    var cycleIdx = Math.floor(t / CYCLE);
+    if (total && cycleIdx >= total) { finish(); return false; }
+    var within = t - cycleIdx * CYCLE, acc = 0, ph = PHASES[0], local = 0;
+    for (var i = 0; i < PHASES.length; i++) {
+      if (within < acc + PHASES[i].dur) { ph = PHASES[i]; local = within - acc; break; }
+      acc += PHASES[i].dur;
+    }
+    var p = local / ph.dur;
+    var s = ph.from + (ph.to - ph.from) * ease(p);
+    setScale(s);
+    ring.style.strokeDashoffset = C * (1 - p);
+    stage.style.setProperty("--phase", ph.color);
+    var c = String(Math.max(1, Math.ceil(ph.dur - local)));
+    if (ph.name !== lastPhase) { phaseEl.textContent = ph.name; lastPhase = ph.name; }
+    if (c !== lastCount) { countEl.textContent = c; lastCount = c; }
+    var st = total ? "Cycle " + (cycleIdx + 1) + " of " + total : "Cycle " + (cycleIdx + 1);
+    if (st !== lastStatus) { statusEl.textContent = st; lastStatus = st; }
+    return true;
+  }
+
+  function loop(now) {
+    if (!running) return;
+    elapsed = (now - startAt) / 1000;
+    if (render(elapsed)) raf = requestAnimationFrame(loop);
+  }
+
+  async function lockWake() {
+    try { if (navigator.wakeLock) wake = await navigator.wakeLock.request("screen"); } catch (e) { wake = null; }
+  }
+  function releaseWake() { try { if (wake) wake.release(); } catch (e) {} wake = null; }
+
+  function start() {
+    running = true; started = true;
+    orb.parentNode.classList.add("orb-on");
+    startAt = performance.now() - elapsed * 1000;
+    toggleBtn.textContent = "Pause";
+    lockRounds(true);
+    lockWake();
+    raf = requestAnimationFrame(loop);
+  }
+  function pause() {
+    running = false;
+    cancelAnimationFrame(raf);
+    toggleBtn.textContent = "Resume";
+    releaseWake();
+  }
+  function finish() {
+    running = false; started = false; elapsed = 0;
+    cancelAnimationFrame(raf);
+    releaseWake();
+    toggleBtn.textContent = "Start again";
+    lockRounds(false);
+    setScale(0);
+    ring.style.strokeDashoffset = C;
+    lastPhase = lastCount = lastStatus = "";
+    phaseEl.textContent = "Done";
+    countEl.textContent = "";
+    statusEl.textContent = "Finished. Rest and breathe normally for a moment.";
+    stage.classList.remove("orb-on");
+  }
+  function reset() {
+    running = false; started = false; elapsed = 0;
+    cancelAnimationFrame(raf);
+    releaseWake();
+    toggleBtn.textContent = "Start";
+    lockRounds(false);
+    setScale(0);
+    ring.style.strokeDashoffset = C;
+    stage.style.setProperty("--phase", "var(--inhale)");
+    stage.classList.remove("orb-on");
+    lastPhase = lastCount = lastStatus = "";
+    phaseEl.textContent = "Ready";
+    countEl.textContent = "4-7-8";
+    statusEl.textContent = "Sit comfortably. Breathe in through your nose, out through your mouth.";
+  }
+
+  toggleBtn.addEventListener("click", function () { if (running) pause(); else start(); });
+  resetBtn.addEventListener("click", reset);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && running) lockWake();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "Space" && e.target === document.body) { e.preventDefault(); toggleBtn.click(); }
+  });
+  setScale(0);
+})();
+</script>
+
+</body>
+</html>
